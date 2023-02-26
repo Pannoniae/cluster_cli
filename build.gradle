@@ -60,7 +60,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/JonKerridge/cluster_cli_library"
+            url = "https://maven.pkg.github.com/JonKerridge/cluster_cli"
             credentials {
                 username = props.getProperty("gpr.user")
                 password = props.getProperty("gpr.key")

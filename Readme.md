@@ -82,7 +82,10 @@ class NodeRun2 {
 }
 </pre>
 
-If using the LocalNode.jar then you will be asked for the last part of the IP address.
+If using the LocalNode-?.?.?.jar then you will be asked for the last part of the IP address.
+
+If using NetNode-?.?.?.jar you can either supply the Host IP address as an argument or 
+you will be asked to input the Host IP address as a string.
 
 
 
