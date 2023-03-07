@@ -87,6 +87,10 @@ If using the LocalNode-?.?.?.jar then you will be asked for the last part of the
 If using NetNode-?.?.?.jar you can either supply the Host IP address as an argument or 
 you will be asked to input the Host IP address as a string.
 
+In both cases the same jar can be used to load ANY application, 
+provided the version numbers used to parse and run the host match the version
+number of the node.jar
+
 
 
 

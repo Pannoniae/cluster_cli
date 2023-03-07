@@ -5,7 +5,7 @@ plugins {
     id 'application'}
 
 group 'jonkerridge'
-version '1.0.0'
+version '1.0.1'
 
 String propertyFileName = "C:/Github/gradle.properties"
 File propsFile = new File(propertyFileName)

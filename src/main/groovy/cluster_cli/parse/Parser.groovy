@@ -7,8 +7,12 @@ import groovyjarjarpicocli.CommandLine
 class Parser {
 
   String inputFileName, outputTextFile, outObjectFile
-  String version = "1.0.0"
-
+  String version = "1.0.1"
+/**
+ * Create an instance of the parser
+ * @param inFileName the full path name of the file containing the DSL specification,
+ * excluding the suffix (.clic)
+ */
   Parser(String inFileName) {
     this.inputFileName = inFileName + ".clic"
     outputTextFile = inputFileName + "txt"
@@ -17,9 +21,9 @@ class Parser {
 
   String hostIPAddress
 
-  class HostSpecification {
-    @CommandLine.Option( names = "-ip", description = "the IP address of the host") String hostIP
-  } // HostSpecification
+  class VersionSpecification {
+    @CommandLine.Parameters( description = "the software version number") String versionString
+  } // VersionSpecification
 
   class EmitSpecification {
     @CommandLine.Option(names = ["-n", "-nodes"], description = "number of nodes") int nodes
@@ -79,7 +83,11 @@ class Parser {
       return false
     }
   }
-
+/**
+ * Used to invoke the parsing of the input file
+ *
+ * @return indicates whether the parsing was successful or not
+ */
   boolean parse(){
     boolean outcome = true
     if (!ExtractVersion.extractVersion(version)){
@@ -94,14 +102,13 @@ class Parser {
       String[] args = tokens.toArray(new String[0])
       ParseRecord parseRecord = new ParseRecord()
       switch (lineType) {
-        case 'host':
-          HostSpecification host = new HostSpecification()
-          new CommandLine(host).parseArgs(args)
-          println "HostIP = ${host.hostIP}"
+        case 'version':
+          VersionSpecification versionSpecification = new VersionSpecification()
+          new CommandLine(versionSpecification).parseArgs(args)
+          println "Version = ${versionSpecification.versionString}"
           parseRecord.typeName = lineType
-          parseRecord.hostAddress = host.hostIP
-          parseRecord.version = version
-          hostIPAddress = host.hostIP
+          parseRecord.version = versionSpecification.versionString
+          assert version == parseRecord.version:"Version mismatch - Software is $version, specification expecting ${versionSpecification.versionString}"
           buildData << parseRecord
           break
         case 'emit':

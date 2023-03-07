@@ -21,13 +21,20 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class NodeRun {
 
   String hostIP, localIP
-  String version = "1.0.0"
-
+  String version = "1.0.1"
+/**
+ * Invoke a node
+ * @param hostIP the IP address of the host
+ */
   NodeRun(String hostIP){
     this.hostIP = hostIP
     this.localIP = null
   }
-
+/**
+ * Invoke a node in Local mode
+ * @param hostIP the host IP address, usually 127.0.0.1
+ * @param localIP the Ip address of the node to be created
+ */
   NodeRun(String hostIP, String localIP){
     this.hostIP = hostIP
     this.localIP = localIP
@@ -222,5 +229,25 @@ class NodeRun {
     new PAR([process]).run()
     println "Node $nodeIP total elapsed time = ${System.currentTimeMillis() - startTime} milliseconds"
   } //invoke
-  
+
+  /**
+   * Invoke a Node
+   * @param args [0] is the hostIP address
+   *             [1] is the IP address of the node when running in Local mode using loop back addresses
+   */
+  static void main(String[] args) {
+      switch (args.size()){
+        case 1:
+          new NodeRun(args[0]).invoke()
+          break
+        case 2:
+          new NodeRun(args[0], args[1]).invoke()
+          break
+        default:
+          println "NodeRun: wrong number of arguments, ${args} supplied" +
+              "\n\targs[0] specifies the hostIP address" +
+              "\n\targs[1] specifies IP address of node when using Local loop back testing"
+      }
+
+  }
 }

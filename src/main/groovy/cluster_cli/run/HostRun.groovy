@@ -3,8 +3,6 @@ package cluster_cli.run
 import cluster_cli.processes.Manager
 import cluster_cli.records.Acknowledgement
 import cluster_cli.records.ClassDefinitions
-import cluster_cli.records.CollectInterface
-import cluster_cli.records.EmitInterface
 import cluster_cli.records.ExtractVersion
 import cluster_cli.records.ParseRecord
 import cluster_cli.records.TerminalIndex
@@ -21,11 +19,20 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class HostRun {
 
   String structureFileName, nature  // nature is either 'Net' default or 'Local'
-  String version = "1.0.0"
+  String version = "1.0.1"
   Class emitClass
   Class collectClass
   String fileBasename
 
+  /**
+   * A class used to run the host node of a cluster
+   * This version assumes the cluster will operate over a real network of workstations
+   *
+   * @param structureFile the full path name of the file holding the parsed structure,
+   * excluding the suffix
+   * @param emitName the class name of the data object to be processed
+   * @param collectName the class name of the object used to collect the resulting output
+   */
   HostRun(String structureFile,
           String emitName,
           String collectName){
@@ -35,7 +42,17 @@ class HostRun {
     collectClass = Class.forName(collectName)
     nature = "Net"
   }
-
+/**
+ * A class used to run the host node of a cluster
+ * This version invokes a cluster that can operate over a real network of workstations
+ * or locally using loop back network addresses
+ *
+ * @param structureFile the full path name of the file holding the parsed structure,
+ * excluding the suffix
+ * @param emitName the class name of the data object to be processed
+ * @param collectName the class name of the object used to collect the resulting output
+ * @param nature Net (default) or Local; Local implies use of a local loopback network using 127.0.0.0 addresses
+ */
   HostRun(String structureFile,
           String emitName,
           String collectName,
@@ -47,6 +64,15 @@ class HostRun {
     this.nature = nature
   }
 
+/**
+ * A class used to run the host node of a cluster
+ * This version assumes the cluster will operate over a real network of workstations
+ *
+ * @param structureFile the full path name of the file holding the parsed structure,
+ * excluding the suffix
+ * @param emitClass the name of the class containing the object to be processed
+ * @param collectClass the name of the class used to collect the resulting output
+ */
   HostRun(String structureFile,
           Class emitClass,
           Class collectClass){
@@ -56,7 +82,17 @@ class HostRun {
     this.collectClass = collectClass
     nature = "Net"
   }
-
+/**
+ * A class used to run the host node of a cluster
+ * This version invokes a cluster that can operate over a real network of workstations
+ * or locally using loop back network addresses
+ *
+ * @param structureFile the full path name of the file holding the parsed structure,
+ * excluding the suffix
+ * @param emitClass the name of the class containing the object to be processed
+ * @param collectClass the name of the class used to collect the resulting output
+ * @param nature Net (default) or Local; Local implies use of a local loopback network using 127.0.0.0 addresses
+ */
   HostRun(String structureFile,
           Class emitClass,
           Class collectClass,
@@ -87,10 +123,10 @@ class HostRun {
       totalWorkers = totalWorkers + (it.nodes * it.workers)
     }
 
-    String hostIP = structure[0].hostAddress
+//    String hostIP = structure[0].hostAddress
     String parsedVersion = structure[0].version
     assert parsedVersion == version:"Host: parser ($parsedVersion) and run ($version) version tags do not match"
-    println "cluster_cli: HostRun Invoke System version: $version on Host $hostIP"
+    println "cluster_cli: HostRun Invoke System version: $version "
     // no longer need structure[0]
     structure.remove(0)
 
@@ -107,7 +143,7 @@ class HostRun {
       hostNodeAddress = new TCPIPNodeAddress( "127.0.0.1", 1000)  // assumed local host IP
     Node.getInstance().init(hostNodeAddress)
     String nodeIP = hostNodeAddress.getIpAddress()
-    assert hostIP == nodeIP: "Expected hostIP: $hostIP does not match actual nodeIP $nodeIP"
+//    assert hostIP == nodeIP: "Expected hostIP: host does not match actual nodeIP $nodeIP"
 // get all nodes' IP addresses
     def fromNodes = NetChannel.numberedNet2One(1)
     println "Host: Please start $totalNodes nodes with $nodeIP as host node; creating $totalWorkers internal processes and $requiredManagers manager processes"
@@ -184,7 +220,7 @@ class HostRun {
     println "Host has completed phase 1"
 
 // can now start phase 2 - all net input channels are created in host and nodeLoaders
-    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(2, "$hostIP"))
+    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(2, "host"))
 // create net input channels for the manager processes
     List <List <ChannelInput>> sendReadyInputChannels // the inner list has two entries [ send, read]
     sendReadyInputChannels = []
@@ -207,7 +243,7 @@ class HostRun {
         "Expecting ack value 2 got ${ack.ackValue} from ${ack.ackString}" }
     println "Host has completed phase 2"
 // now start phase 3, creation of the corresponding net output channels
-    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(3, "$hostIP"))
+    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(3, "host"))
 // create ChannelOutputLists for useIndex and terminate for each manager
     List <ChannelOutputList > indexList = []
     for ( rm in 0 ..< requiredManagers){
@@ -230,9 +266,9 @@ class HostRun {
     println "Host has completed phase 3"
 
 // now start phase 4, creation of the manager process network
-    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(4, "$hostIP"))
+    for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(4, "host"))
 
-    println "Host $hostIP now invoking $requiredManagers manager process(es)"
+    println "Host host now invoking $requiredManagers manager process(es)"
     List<CSProcess> hostManagers = []
     for ( i in 0 ..< requiredManagers){
       println "Host creating manager $i"

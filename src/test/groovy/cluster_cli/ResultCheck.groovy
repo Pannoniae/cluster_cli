@@ -5,16 +5,16 @@ import org.junit.Test
 class ResultCheck {
   @Test
   public void test(){
-    String testName = "7"
-    int nodes = 2
-    int collectors = 2
+    String testName = "1"
+    int nodes = 1
+    int collectors = 1
     int minValue, maxValue
     minValue = 501
-    maxValue = 900
+    maxValue = 600
     List <String> fileNames = []
     for ( n in 0 ..< nodes)
       for ( c in 0 ..< collectors)
-        fileNames << "C:/RunJars/clic/Test${testName}Results-${n}-${c}.cliCout"
+        fileNames << "./Test${testName}Results-${n}-${c}.cliCout"
     println "Files are $fileNames"
     fileNames.each { String name ->
       println "$name"
