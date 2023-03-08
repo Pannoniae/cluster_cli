@@ -14,14 +14,14 @@ each with a different IP address to form the nodes of the cluster.
 A local host is also required which can access the application classes.  
 The local host must be started BEFORE any of the other nodes.  
 The nodes assume the host is placed on node 127.0.0.1. 
-See clic_run and the test codes, where there are separate hosts 
+See the test codes, where there are separate hosts 
 for each test and scripts to run the required nodes.
 
 The jar LocalNode contained in the corresponding release can 
 also be used to run separate instances of the node process.
 
 The code RunParser is used to parse a definition file and create 
-a version that can be used to build the system using RunHostLocal. This creates a file
+a version that can be used to build the system . This creates a file
 with suffix .clicstruct which is used by the rest of the system.  The parser also
 produces a readable test file of the parsed output in a file with suffix .clictxt
 
@@ -32,7 +32,7 @@ at the time of use.
 
 The following is a DSL definition for test5:
 <pre>
-host -ip 127.0.0.1
+version 1.0.1
 emit -nodes 2 -workers 2 -p int,int!0,23!100,123!200,223!300,323
 work -n 2 -w 4 -m update1 -p int!500
 collect -n 2 -w 2 -f Test5Results
@@ -42,7 +42,7 @@ This defines a network of three clusters (emit, work and collect), each with 2 n
 and varying numbers of workers running in parallel within the node.
 
 An emit node assumes the data object has a create method as defined in 
-cli_records.EmitInterface. Parameters for the constructor are passed to each node and
+records.EmitInterface. Parameters for the constructor are passed to each node and
 worker in order.  The first entry in the parameter list specifies the data types.
 This is followed by the number of nodes multiplied by the number of workers instances of parameter
 values, separated by !.  These parameters will govern the number of data objects 
@@ -54,7 +54,8 @@ undertake the operation is specified after the  -(m)ethod option.  The parameter
 followed by required number of parameter values.
 
 The collect cluster comprises 2 nodes of 2 internal collect processes.  It requires the definition of a Collect 
-class that implements the cli_records.CollectInterface.  This defines a collate and finalise method that will be
+class that implements the records.CollectInterface.  This defines a collate(T data, List params), 
+where T is the type of the emitted objects and  a finalise(List params) method that will be
 used to process the incoming data objects.  The output can also be stored in a file the base name of which appears
 after the -(f)ile option.  The Filenames will be differentiated by the node and internal 
 Collect process used to write the file.
@@ -62,34 +63,65 @@ Collect process used to write the file.
 The local host for the above specification is invoked as follows (note the .clicstruct suffix is added automatically):
 
 <pre>
-class HostRunT5 {
+class T5Host {
   static void main(String[] args) {
-    String structureFileName = "D:\\IJGradle\\cli_cluster\\src\\test\\groovy\\cli_cluster/test5"
-    String emitObjectName = "cli_cluster.EmitObject"
-    String collectObjectName = "cli_cluster.CollectObject"
-    new RunHostLocal(structureFileName, emitObjectName, collectObjectName ).invoke()
+    String structure = "D:\\IJGradle\\cluster_cli\\src\\test\\groovy\\parserTests_101/test5"
+    Class emitClass = EmitObject
+    Class collectClass = CollectObject
+    new HostRun(structure, emitClass, collectClass, "Local").invoke()
   }
 }
 </pre>
 
-and the node at 127.0.0.2 is invoked as follows:
+and the node at 127.0.0.6 is invoked as follows:
 
 <pre>
-class NodeRun2 {
+class Node6 {
   static void main(String[] args) {
-    new LocalNode("127.0.0.1", "127.0.0.2").invoke()
+    new NodeRun("127.0.0.1", "127.0.0.6").invoke()
   }
 }
 </pre>
 
-If using the LocalNode-?.?.?.jar then you will be asked for the last part of the IP address.
+Examples of the use of the cluster_cli software library are available on GitHub at:
 
-If using NetNode-?.?.?.jar you can either supply the Host IP address as an argument or 
-you will be asked to input the Host IP address as a string.
+Mandelbrot Calculation
 
-In both cases the same jar can be used to load ANY application, 
-provided the version numbers used to parse and run the host match the version
-number of the node.jar
+https://github.com/JonKerridge/ClusterMandelbrot
+
+Creating a Concordance of Text Files
+
+https://github.com/JonKerridge/ClusterConcordance
+
+Please note that once an artifact comprising a jar that runs a node has been created,
+it can be used to load ANY application.  The node loading capability does not need to be linked to
+a specific application.
+
+The following class will run a node using the loop back network capability based on addresses in 
+the range 120.0.0.0.
+
+<pre>
+class RunNode {
+  static void main(String[] args) {
+    new NodeRun(args[0], args[1]).invoke()
+  }
+}
+</pre>
+
+assuming a jar exists with RunNode as entry point then
+
+<pre>
+java -jar RunNode.jar 127.0.0.1 127.0.0.5
+</pre>
+
+will create a node at IP address 127.0.0.5 that expects the host node to be running at 127.0.0.1.
+
+When creating such a network the host node MUST be invoked first, followed by the cluster nodes.
+
+The only difference when creating a node of a real cluster is that args[0] contains the IP address of the host
+and there is no args[1].
+
+Version 1.0.2 when released will be tested on a real network of workstations to form the cluster.
 
 
 
