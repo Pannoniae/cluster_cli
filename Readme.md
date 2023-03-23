@@ -121,7 +121,31 @@ When creating such a network the host node MUST be invoked first, followed by th
 The only difference when creating a node of a real cluster is that args[0] contains the IP address of the host
 and there is no args[1].
 
-Version 1.0.2 when released will be tested on a real network of workstations to form the cluster.
+Version 1.0.2 has been tested on a real network of workstations to form the cluster, 
+using the Cluster Mandelbrot application (see https://github.com/JonKerridge/ClusterMandelbrot).
+
+testing involved creating NetHost.jar and NetNode.jar artifacts which could then be 
+transferred to the network nodes using Remote Desktop.  The nodes where NetNode is 
+executed just needed that jar and are invoked as
+
+<pre>
+java -jar NetNode.jar hostip-address
+</pre>
+
+The host node required the NetHost. jar, the *.clistruct (files) and the folder 
+containing the class definitions, copied from your IDE.
+
+so the folder mandelbrot contained the class files Mandelbrotdata and MandelbrotCollect
+
+the host is invoked  using, for example,
+
+<pre>
+java -jar NetHost.jar ./mandelbrot1n4w
+</pre>
+
+The host node MUST be started first and then the other nodes.
+The nodes do NOT need access to the application class files as these are 
+transferred as required from the host.
 
 
 
