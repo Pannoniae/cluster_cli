@@ -21,7 +21,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class NodeRun {
 
   String hostIP, localIP
-  String version = "1.0.2"
+  String version = "1.0.3"
 /**
  * Invoke a node
  * @param hostIP the IP address of the host

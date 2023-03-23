@@ -7,7 +7,7 @@ import groovyjarjarpicocli.CommandLine
 class Parser {
 
   String inputFileName, outputTextFile, outObjectFile
-  String version = "1.0.2"
+  String version = "1.0.3"
 /**
  * Create an instance of the parser
  * @param inFileName the full path name of the file containing the DSL specification,

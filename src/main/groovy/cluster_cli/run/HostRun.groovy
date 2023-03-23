@@ -19,7 +19,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class HostRun {
 
   String structureFileName, nature  // nature is either 'Net' default or 'Local'
-  String version = "1.0.2"
+  String version = "1.0.3"
   Class emitClass
   Class collectClass
   String fileBasename
