@@ -32,11 +32,11 @@ class ReadBuffer implements CSProcess{
     (running, previousEnding, internalEnding) = [true, false, false]
     boolean [] preCon
     preCon = [true, false]
-    // tell manager that the read buffer can accept nInternals objects
-    for ( i in 1 .. nInternals) {
-      readyToRead.write(nodeValue)
-//      println "RB [$clusterIndex, $nodeIndex]: sent nodeIndex $preCon"
-    }
+    // removed initialisation in v1.0.2 to manager
+//    // tell manager that the read buffer can accept nInternals objects
+//    for ( i in 1 .. nInternals) {
+//      readyToRead.write(nodeValue)
+//    }
     while (running){
 //      println "RB [$clusterIndex, $nodeIndex]: $preCon $entries"
       switch (readAlt.priSelect(preCon)){

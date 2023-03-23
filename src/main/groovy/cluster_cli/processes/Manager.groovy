@@ -24,10 +24,20 @@ class Manager implements CSProcess{
     Integer[] indexBuffer = new Integer[queueSize]
     int entries, writeTo, readFrom, terminated
     boolean running
+    // added in v1.0.2 initialise the indexBuffer with alternating read node index values
+    int indexEntry = 0
+    for ( i in 0 ..< nReadInternals)
+      for ( n in 0 ..< nReadNodes){
+        indexBuffer[indexEntry] = n
+        indexEntry = indexEntry + 1
+      }
+//    println "Manager $clusterIndex: $indexBuffer, $entries"
     (entries, writeTo, readFrom, terminated, running) =
-        [0, 0, 0, 0, true]
-    ALT managerAlt = new ALT([readyToSend, readyToRead])
+        [queueSize, 0, 0, 0, true]
+
+
     boolean [] managerPreCon = [entries > 0, entries < queueSize]
+    ALT managerAlt = new ALT([readyToSend, readyToRead])
     while (running) {
 //      println "Manager $clusterIndex: $managerPreCon, $entries, $indexBuffer"
       switch (managerAlt.priSelect(managerPreCon)){
@@ -46,20 +56,12 @@ class Manager implements CSProcess{
           }
           break
         case 1: // a read buffer is ready to read an object and indexBuffer is not full
-//           or the read buffer has terminated, which will be after the connected WriteBuffer
           def object = readyToRead.read()
-//          if ( !(object instanceof TerminalIndex)) {
             // save the reading node's index in the queue
             int readingNodeIndex = (object as NodeIndex).indexValue
             indexBuffer[writeTo] = readingNodeIndex as Integer
             writeTo = (writeTo + 1) % queueSize
             entries = entries + 1
-//          } else {
-//            println "Manager $clusterIndex has read terminalIndex from ReadBuffer"
-//            terminated = terminated + 1
-//            if (terminated == nReadNodes) running = false
-//            println "Manager $clusterIndex : termination $terminated, $running"
-//          }
           break
       } // switch
 //      println "Manager $indexBuffer"

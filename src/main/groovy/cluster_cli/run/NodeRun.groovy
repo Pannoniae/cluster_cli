@@ -21,7 +21,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class NodeRun {
 
   String hostIP, localIP
-  String version = "1.0.1"
+  String version = "1.0.2"
 /**
  * Invoke a node
  * @param hostIP the IP address of the host
@@ -64,7 +64,7 @@ class NodeRun {
     toHost.write(nodeIP)
 // now get class definitions from host
     ClassDefinitions classDefinitions = (fromHost.read() as ClassDefinitions)
-    assert classDefinitions.version == version: "Version mismatch: Parser / Host = ${classDefinitions.version}, Node = $version "
+    assert classDefinitions.version == version: "Version mismatch: Parser / Host = ${classDefinitions.version}, Node = $version"
 // nodeLoader can now read in the structure object unless some preAllocated nodes have not been started
     Object dataFromHost = fromHost.read()
     if (dataFromHost instanceof TerminalIndex) System.exit(-2)  // instant termination

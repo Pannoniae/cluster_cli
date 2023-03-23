@@ -19,7 +19,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class HostRun {
 
   String structureFileName, nature  // nature is either 'Net' default or 'Local'
-  String version = "1.0.1"
+  String version = "1.0.2"
   Class emitClass
   Class collectClass
   String fileBasename
@@ -105,7 +105,7 @@ class HostRun {
   }
 
   void invoke() {
-    if (!ExtractVersion.extractVersion(version)){
+    if (!ExtractVersion.extractVersion(version, nature)){
       println "cluster_cli:Version $version needs to be downloaded, please modify the gradle.build file"
       System.exit(-1)
     }
@@ -323,5 +323,23 @@ class HostRun {
     println "Host has terminated"
 
   } // invoke
+
+  static void main(String[] args) {
+    switch (args.size()){
+      case 3:
+        new HostRun(args[0], args[1], args[2]).invoke()
+        break
+      case 4:
+        new HostRun(args[0], args[1], args[2], args[3]).invoke()
+        break
+      default:
+        println "HostRun: wrong number of arguments ${args} supplied" +
+            "\n\t all arguments are Strings" +
+            "\n\targs[0] - full path name of the parsed structure file without suffix" +
+            "\n\targs[1] - name of class used to emit objects into the network" +
+            "\n\targs[2] - name of class used to process and collect resultant objects" +
+            "\n\targs[4] - optional - if specified has value 'Local'"
+    }
+  }
 
 }
