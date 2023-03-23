@@ -90,7 +90,7 @@ class Parser {
  */
   boolean parse(){
     boolean outcome = true
-    if (!ExtractVersion.extractVersion(version)){
+    if (!ExtractVersion.extractVersion(version, "Local")){
       println "cli_cluster: Version $version needs to downloaded, please modify the gradle.build file"
       System.exit(-1)
     }
