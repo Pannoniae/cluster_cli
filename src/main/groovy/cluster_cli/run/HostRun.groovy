@@ -6,6 +6,7 @@ import cluster_cli.records.ClassDefinitions
 import cluster_cli.records.ExtractVersion
 import cluster_cli.records.ParseRecord
 import cluster_cli.records.TerminalIndex
+import cluster_cli.records.VersionControl
 import groovy_jcsp.ChannelOutputList
 import groovy_jcsp.PAR
 import jcsp.lang.CSProcess
@@ -19,7 +20,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class HostRun {
 
   String structureFileName, nature  // nature is either 'Net' default or 'Local'
-  String version = "1.0.3"
+  String version = VersionControl.versionTag
   Class emitClass
   Class collectClass
   String fileBasename

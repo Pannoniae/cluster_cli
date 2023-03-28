@@ -2,12 +2,13 @@ package cluster_cli.parse
 
 import cluster_cli.records.ExtractVersion
 import cluster_cli.records.ParseRecord
+import cluster_cli.records.VersionControl
 import groovyjarjarpicocli.CommandLine
 
 class Parser {
 
   String inputFileName, outputTextFile, outObjectFile
-  String version = "1.0.3"
+  String version = VersionControl.versionTag
 /**
  * Create an instance of the parser
  * @param inFileName the full path name of the file containing the DSL specification,

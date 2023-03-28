@@ -7,6 +7,7 @@ import cluster_cli.records.Acknowledgement
 import cluster_cli.records.ClassDefinitions
 import cluster_cli.records.ParseRecord
 import cluster_cli.records.TerminalIndex
+import cluster_cli.records.VersionControl
 import groovy_jcsp.ChannelOutputList
 import groovy_jcsp.PAR
 import jcsp.lang.CSProcess
@@ -21,7 +22,7 @@ import jcsp.net2.tcpip.TCPIPNodeAddress
 class NodeRun {
 
   String hostIP, localIP
-  String version = "1.0.3"
+  String version = VersionControl.versionTag
 /**
  * Invoke a node
  * @param hostIP the IP address of the host
