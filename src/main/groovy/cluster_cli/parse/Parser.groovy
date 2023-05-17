@@ -182,12 +182,12 @@ class Parser {
               outcome = false
           int totalParamString = collect.nodes * collect.workers
           if (collect.collectParamString != null)
-            if (!checkValidity((collect.collectParamString.size() == 2),
-                "Collect: The collect method parameter string must consist of ONE type list followed by ONE value list"))
+            if (!checkValidity((collect.collectParamString.size() == totalParamString +1),
+                "Collect: The collate method must have ${(totalParamString+1)} parameter strings; ${collect.collectParamString.size()} supplied"))
               outcome = false
           if (collect.finaliseParamString != null)
-            if (!checkValidity((collect.finaliseParamString.size() == 2),
-                "Collect: The finalise method parameter string must consist of ONE type list followed by ONE value list"))
+            if (!checkValidity((collect.finaliseParamString.size() == totalParamString +1),
+                "Collect: The finalise method must have ${(totalParamString+1)} parameter strings; ${collect.finaliseParamString.size()} supplied"))
               outcome = false
           parseRecord.typeName = lineType
           parseRecord.hostAddress = hostIPAddress

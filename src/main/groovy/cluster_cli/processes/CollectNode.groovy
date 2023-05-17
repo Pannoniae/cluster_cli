@@ -35,14 +35,14 @@ class CollectNode implements CSProcess{
       List <List <String>> finaliseParameters
       collectParameters = [
           structure[clusterIndex].collectParameters[0],
-          structure[clusterIndex].collectParameters[1]
-//          structure[clusterIndex].collectParameters[((nodeIndex * nInternals) + i) + 1]
+//up to 1.0.4          structure[clusterIndex].collectParameters[1]
+          structure[clusterIndex].collectParameters[((nodeIndex * nInternals) + i) + 1] // from 1.0.5
       ]
 
       finaliseParameters = [
           structure[clusterIndex].finaliseParameters[0],
-          structure[clusterIndex].finaliseParameters[1]
-//          structure[clusterIndex].finaliseParameters[((nodeIndex * nInternals) + i) + 1]
+//up to 1.0.4          structure[clusterIndex].finaliseParameters[1]
+          structure[clusterIndex].finaliseParameters[((nodeIndex * nInternals) + i) + 1] // from 1.0.5
       ]
       network << new Collector(
           requestObject: requestChannel.out(),
