@@ -319,6 +319,8 @@ class HostRun {
     finalTimings.each {ti ->
       outputTimes.println "${tokens[nTokens]}, ${ti.nodeIP}, ${ti.clusterIndex}, ${ti.nodeIndex}, ${ti.elapsed}, ${ti.processing}, "
     }
+    // added in 1.0.6
+    outputTimes.println "Host,,,,,,${totalElapsed},${processingElapsed}"
     outputTimes.flush()
     outputTimes.close()
     println "Host has terminated"
