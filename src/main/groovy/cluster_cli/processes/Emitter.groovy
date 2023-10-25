@@ -14,7 +14,7 @@ class Emitter implements CSProcess{
 
   @Override
   void run() {
-    List parameterValues = ExtractParameters.extractParams(emitParams[0], emitParams[1])
+    List parameterValues = ExtractParameters.extractParams(emitParams[0] as List, emitParams[1] as List)
     println "Emit [$clusterIndex, $nodeIndex, $internalIndex] parameters $parameterValues"
     Class[] cArg = new Class[1]
     cArg[0] = List.class

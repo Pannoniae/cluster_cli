@@ -15,6 +15,7 @@ class TerminalIndex implements Serializable{
   String toString() {
     String s = "Timing for, $nodeIP, clusterIndex, $clusterIndex, " +
         "nodeIndex, $nodeIndex, Elapsed, $elapsed, Processing, $processing "
+    return s
   }
 
 }

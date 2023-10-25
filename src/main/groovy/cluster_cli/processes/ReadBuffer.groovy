@@ -25,11 +25,11 @@ class ReadBuffer implements CSProcess{
     NodeIndex nodeValue = new NodeIndex(indexValue:  nodeIndex)
 //    println "Read Buffer [$clusterIndex, $nodeIndex] starting $nInternals  internal processes"
     List buffer = new List[nInternals]
-    boolean running, previousEnding, internalEnding
-    int readFrom, writeTo, entries, previousTerminations, internalTerminations
+    boolean running
+    int readFrom, writeTo, entries, previousTerminations
     ALT readAlt = new ALT([objectInput, fromInternalProcesses])
-    (readFrom, writeTo, entries, previousTerminations, internalTerminations) = [0,0,0,0,0]
-    (running, previousEnding, internalEnding) = [true, false, false]
+    (readFrom, writeTo, entries, previousTerminations) = [0,0,0,0]
+    running = true
     boolean [] preCon
     preCon = [true, false]
     // removed initialisation in v1.0.2 to manager

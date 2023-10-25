@@ -11,7 +11,6 @@ class Manager implements CSProcess{
 
   ChannelInput readyToSend, readyToRead
   ChannelOutputList sendTo
-  ChannelOutputList terminateReader
   int nWriteNodes, nReadNodes, nReadInternals, clusterIndex
 //  List <ParseRecord> structure
 //  ChannelOutput toHost

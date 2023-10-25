@@ -13,7 +13,7 @@ import jcsp.net2.NetChannelOutput
 
 class CollectNode implements CSProcess{
   String nodeIP
-  NetAltingChannelInput fromPreviousNodes, terminateInput
+  NetAltingChannelInput fromPreviousNodes
   NetChannelOutput readyToRead
   int nodeIndex, clusterIndex, nInternals, nPrevious
   Class <?> collectClass

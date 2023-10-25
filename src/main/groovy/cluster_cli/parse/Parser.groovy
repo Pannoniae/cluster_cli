@@ -29,7 +29,7 @@ class Parser {
   class EmitSpecification {
     @CommandLine.Option(names = ["-n", "-nodes"], description = "number of nodes") int nodes
     @CommandLine.Option(names = ["-w", "-workers"], description = "number of workers per nodeLoader") int workers
-    @CommandLine.Option( names = "-p", split = "!") List emitParamStrings
+    @CommandLine.Option( names = "-p", split = "!") List<String> emitParamStrings
     // a comma separated string of types ! a comma separated string of parameter values
     // each string separated by ! and with NO spaces
     // the number of value parameter strings MUST match the value of nodes * workers
@@ -41,7 +41,7 @@ class Parser {
     @CommandLine.Option(names = ["-n", "-nodes"], description = "number of nodes") int nodes
     @CommandLine.Option(names = ["-w", "-workers"], description = "number of workers per nodeLoader") int workers
     @CommandLine.Option(names = ["-m", "-method"], description = "name of work method used in this cluster") String workMethodName
-    @CommandLine.Option( names = "-p", split = "!") List workParamString
+    @CommandLine.Option( names = "-p", split = "!") List<String> workParamString
     // all workers have the same parameter values
     // three phase worker additions
     @CommandLine.Option(names = "-3p", description = "flag to indicate three phase worker") boolean threePhase
@@ -53,8 +53,8 @@ class Parser {
     @CommandLine.Option(names = ["-n", "-nodes"], description = "number of nodes") int nodes
     @CommandLine.Option(names = ["-w", "-workers"], description = "number of workers per nodeLoader") int workers
     @CommandLine.Option( names = ["-f", "-file"]) String outFileName  // base name of object file to which collected records are written
-    @CommandLine.Option( names = "-cp", split = "!") List collectParamString  // parameters of the collect method, one for all collect processes
-    @CommandLine.Option( names = "-fp", split = "!") List finaliseParamString  // parameters of the finalise method, one for all collect processes
+    @CommandLine.Option( names = "-cp", split = "!") List<String> collectParamString  // parameters of the collect method, one for all collect processes
+    @CommandLine.Option( names = "-fp", split = "!") List<String> finaliseParamString  // parameters of the finalise method, one for all collect processes
     @CommandLine.Parameters ( description =" IP address for each nodeLoader") List <String> nodeIPs
     // can be placed anywhere in specification but the number of specified IPs must match the number of nodes
   } // CollectSpecification

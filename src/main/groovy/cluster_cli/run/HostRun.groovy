@@ -150,7 +150,7 @@ class HostRun {
     println "Host: Please start $totalNodes nodes with $nodeIP as host node; creating $totalWorkers internal processes and $requiredManagers manager processes"
     List<String> nodeIPstrings = []
 // assumes nodes have created the corresponding net input channels
-    for (n in 1..totalNodes) nodeIPstrings << fromNodes.read() as String
+    for (n in 1..totalNodes) nodeIPstrings << (fromNodes.read() as String)
     println "Node IPs are $nodeIPstrings"
     processingStart = System.currentTimeMillis()
 // create the hostToNodes channels
@@ -231,7 +231,7 @@ class HostRun {
 //      println "channel indices $rm send $sendIndex, read $readIndex"
       def readyToSend = NetChannel.numberedNet2One(sendIndex)
       def readyToRead = NetChannel.numberedNet2One(readIndex)
-      sendReadyInputChannels << [readyToSend, readyToRead]
+      sendReadyInputChannels << ([readyToSend, readyToRead] as List<ChannelInput>)
       println "sendReadyInputChannels manager $rm" +
           "\n\t readyToSend: ${readyToSend.getLocation()}" +
           "\n\t readyToRead: ${readyToRead.getLocation()}"

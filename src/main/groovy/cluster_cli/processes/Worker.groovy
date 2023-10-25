@@ -19,7 +19,7 @@ class Worker implements CSProcess{
   void run() {
     boolean running
 //    println "Worker [$clusterIndex, $nodeIndex, $workerIndex] running using $updateParam"
-    List parameterValues = ExtractParameters.extractParams(updateParam[0], updateParam[1])
+    List parameterValues = ExtractParameters.extractParams(updateParam[0] as List, updateParam[1] as List)
     println "Worker [$clusterIndex, $nodeIndex, $workerIndex] running using parameters: $parameterValues"
     running = true
     while (running){

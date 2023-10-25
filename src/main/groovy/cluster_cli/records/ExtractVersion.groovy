@@ -11,14 +11,14 @@ class ExtractVersion {
       String folder = gradleLocation + "\\$version"
       if (new File(folder).isDirectory()) return true else {
         folder = jarLocation + "\\$version"
-        if (new File(folder).isDirectory()) return true else return false
+        return new File(folder).isDirectory()
       }
     }
   }
 
   static void main(String[] args) {
     String version = "1.0.0"
-    if (!extractVersion(version)) println "cli_cluster:Version $version needs to downloaded, please modify the gradle.build file"
+    if (!extractVersion(version, null)) println "cli_cluster:Version $version needs to downloaded, please modify the gradle.build file"
     else println "Correct version is available: $version"
   }
 }

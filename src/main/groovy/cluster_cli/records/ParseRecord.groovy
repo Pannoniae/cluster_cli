@@ -17,7 +17,7 @@ class ParseRecord implements Serializable {
   List <List <String>> workParameters  // a list of parameters in their String representation (work only)
   List <List <String>> emitParameters // list of list of parameters used by each emitter
   String outFileName  // base name of file to which collected objects are written, multiples differentiated by WorkerID
-  String finaliseNameString  // used in collect type only
+//  String finaliseNameString  // used in collect type only
   List <List <String>> collectParameters
   // list of list of collectParameters used by each collect method
   List <List <String>> finaliseParameters
