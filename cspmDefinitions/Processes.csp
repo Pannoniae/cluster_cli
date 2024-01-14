@@ -1,0 +1,150 @@
+
+Emitter(e2wbChan, D.n.e.x, eNodeN, maxData) =
+    e2wbChan ! eNodeN.D.n.e.x ->
+    if x == maxData then
+        e2wbChan ! eNodeN.UT ->
+        SKIP
+    else 
+        Emitter(e2wbChan, gen(D.n.e.x), eNodeN, maxData)
+
+
+WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nUT, nReadingNodes) =
+    if nUT == 0 then
+        if nReadingNodes == 0 then -- UT sent to all reading nodes
+            rtsChan ! 0 ->     -- to terminate the manager
+            SKIP
+        else    -- send UT to each of the creading nodes
+            transferChan ! nReadingNodes.UT ->    -- nReadingNodes iterates the read node ids
+            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nUT, nReadingNodes-1)
+    else
+        i2wbChan ? nodeN.o ->
+        if o == UT then
+            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nUT-1, nReadingNodes)
+        else
+            rtsChan ! nodeN ->
+            useChan ? nodeN.readingNodeID ->
+            transferChan ! readingNodeID.o ->
+            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nUT, nReadingNodes)    
+
+
+ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, buffer, bufferMax) =
+-- nodeN is the nodie ID of this ReadBuffer
+-- nInternals is the number of Internal processes (Work or Collector) in the node when reduced to zero
+-- indicates that all the Internal processes have been terminated
+-- nSendNodes is the number of nodes writing to this node, when reduced to zero
+-- indicates that all the sending nodes have terminated
+-- buffer the queue holding objects waiting to be processed
+-- bufferMax the maximum size of the buffer, is equal to number of Internal processes
+    if nSendNodes == 0 then     -- all senders have terminated
+        if length(buffer) == 0 then     -- buffer is empty
+            if nInternals == 0 then    -- all local internal processes have been terminated
+                SKIP
+            else  
+                i2rbChan ? nodeN.internalID ->
+                rb2iChan ! nodeN.internalID.UT ->
+                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals-1, nSendNodes, buffer, bufferMax) 
+        else  -- terminating but still objects in buffer
+            i2rbChan ? nodeN.internalID ->
+            rb2iChan ! nodeN.internalID.head(buffer) ->
+            ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+    else    --normal buffer operation as a queue
+        if length(buffer) == 0 then     -- can only accept Sender inputs
+            transferChan ? nodeN.o ->
+            if o == UT then     -- sender has terminated
+               ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
+            else -- put o into buffer
+                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
+        else
+            if length(buffer) == bufferMax then  -- bufSfer is full wait for collector to request
+                i2rbChan ? nodeN.internalID ->
+                rb2iChan ! nodeN.internalID.head(buffer) ->
+                rtrChan ! nodeN ->
+                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+            else    -- normal operation choice of inputs allowed
+                ( transferChan ? nodeN.o ->
+                if o == UT then     -- sender has terminated
+                    ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
+                else -- put o into buffer
+                    ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
+                ) 
+                [] 
+                (
+                i2rbChan ? nodeN.internalID ->
+                rb2iChan ! nodeN.internalID.head(buffer) ->
+                rtrChan ! nodeN ->
+                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+                )
+
+
+Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalID) =
+    c2rbChan ! nodeN.internalID ->
+    rb2cChan ? nodeN.internalID.o ->
+    c2dcChan ! o ->
+    if o == UT then
+        SKIP
+    else
+        Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalID)
+
+DataCheck(dataChan, nUT, expectedResult, completed) =
+-- nUT is the total number of expected UT objects collectNodes * collectors
+    if (nUT == 0) then
+        if completed then
+            CollectEnd()
+        else
+            SKIP    -- it should never get here if it does the assertions will fail
+    else
+        dataChan ? o ->
+        if member(o, expectedResult) then
+            DataCheck(dataChan, nUT,  diff(expectedResult, {o}), false)
+        else    -- must be a UT
+            DataCheck (dataChan, nUT-1, expectedResult, empty(expectedResult))
+
+func(v) = v  --want to add a prime to the value to indicate work has been undertaken
+
+Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerID ) =
+    w2rbChan ! nodeN.workerID ->
+    rb2wChan ? nodeN.workerID.o ->
+    if o == UT then 
+        w2wbChan ! nodeN.UT ->
+        SKIP
+    else
+        w2wbChan !nodeN.o ->
+        Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerID )
+
+Manager(rtsChan, useChan, rtrChan, nWriteEnds, mQueue, mQMax) = 
+    if nWriteEnds == 0 then --all the WriteBuffers have terminated
+        SKIP
+    else
+        if length(mQueue)  == mQMax then 
+            -- must read a rtsChan message and return Reading Node ID from queue
+            rtsChan ? writeNodeID ->
+            if writeNodeID == 0 then    --0 is the terminator
+                Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
+            else
+                useChan ! writeNodeID.head(mQueue) ->
+                Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
+        else
+            if length(mQueue)  == 0 then   
+                -- queue is empty must wait for a Read Node to put its node id into queue
+                rtrChan ? readNodeID ->
+                Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax )
+            else
+                -- queue is neither full nor empty can accept either input
+                (    
+                rtsChan ? writeNodeID ->
+                if writeNodeID == 0 then
+                    Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
+                else
+                    useChan ! writeNodeID.head(mQueue) ->
+                    Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
+                )
+                []
+                (
+                    rtrChan ? readNodeID ->
+                    Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax)
+                )
+               
+
+
+channel finished:Bool
+CollectEnd() =  finished!true -> CollectEnd()
