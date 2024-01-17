@@ -5,6 +5,12 @@ import cluster_cli.records.ParseRecord
 import cluster_cli.records.VersionControl
 import groovyjarjarpicocli.CommandLine
 
+/**
+ * The class used to process a description of the processing required using
+ * the cluster_cli domain specific language.
+ *
+ * The class has a single method called parse()
+ */
 class Parser {
 
   String inputFileName, outputTextFile, outObjectFile
@@ -92,7 +98,7 @@ class Parser {
   boolean parse(){
     boolean outcome = true
     if (!ExtractVersion.extractVersion(version, "Local")){
-      println "cli_cluster: Version $version needs to downloaded, please modify the gradle.build file"
+      println "cluster_cli: Version $version needs to downloaded, please modify the gradle.build file"
       System.exit(-1)
     }
     List<ParseRecord> buildData

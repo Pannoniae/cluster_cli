@@ -17,6 +17,12 @@ import jcsp.net2.Node
 import jcsp.net2.mobile.CodeLoadingChannelFilter
 import jcsp.net2.tcpip.TCPIPNodeAddress
 
+/**
+ * A class used at the host node to load an application over a local loop-back or
+ * a real workstation network.
+ * The host node must be executed BEFORE any of the other nodes.
+ * The class has a single method invoke()
+ */
 class HostRun {
 
   String structureFileName, nature  // nature is either 'Net' default or 'Local'
@@ -104,7 +110,11 @@ class HostRun {
     this.collectClass = collectClass
     this.nature = nature
   }
-
+/**
+ * invoke is the only method in the class HostRun() and is used
+ * to create the application process architecture as specified in the
+ * structureFile.
+ */
   void invoke() {
     if (!ExtractVersion.extractVersion(version, nature)){
       println "cluster_cli:Version $version needs to be downloaded, please modify the gradle.build file"
@@ -341,7 +351,7 @@ class HostRun {
             "\n\targs[0] - full path name of the parsed structure file without suffix" +
             "\n\targs[1] - name of class used to emit objects into the network" +
             "\n\targs[2] - name of class used to process and collect resultant objects" +
-            "\n\targs[4] - optional - if specified has value 'Local'"
+            "\n\targs[3] - optional - if specified has value 'Local'"
     }
   }
 

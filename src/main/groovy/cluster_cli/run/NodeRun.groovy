@@ -19,6 +19,16 @@ import jcsp.net2.Node
 import jcsp.net2.mobile.CodeLoadingChannelFilter
 import jcsp.net2.tcpip.TCPIPNodeAddress
 
+/**
+ * A class used at nodes other than the host node to load an application over
+ * a local loop-back or real workstation network.
+ *
+ * In the case of a real network the only parameter value required by the class
+ * is the IP address of the host node.
+ *
+ * The host node must be invoked before any of the other nodes.
+ * The class has a single method called invoke()
+ */
 class NodeRun {
 
   String hostIP, localIP
@@ -40,7 +50,11 @@ class NodeRun {
     this.hostIP = hostIP
     this.localIP = localIP
   }
-
+/**
+ * invoke() is the only method in the class NodeRun.
+ * It is used to run the application loading code at a node by communicating
+ * with the host node to obtain the required information and application code.
+ */
   void invoke(){
     long startTime
     startTime = System.currentTimeMillis()

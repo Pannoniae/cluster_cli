@@ -1,11 +1,11 @@
-emitNodes = 1   --1   2   1   2
-emitters = 1    --1   1   2   2
+emitNodes = 1   
+emitters = 1    
 dataN = 4
 
-collectNodes = 1    --  1   2       1       2
-collectors = 1      --  1   1       2       2
+collectNodes = 1    
+collectors = 1      
 
-workNodes = 2
+workNodes = 1
 workers = 1
 
 datatype object = D.{1..emitNodes}.{1..emitters}.{1..dataN} | UT
