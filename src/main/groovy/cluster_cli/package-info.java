@@ -16,7 +16,7 @@ package cluster_cli;
  * In the above case there is a single work cluster and represents a processing farm
  *
  * The number of work clusters can be greater than 1 in which case the processing architecture
- * is a parallel pipeline.
+ * is a parallel pipeline. Each work cluster can have a different number of nodes and workers per node
  *
  * where
  * v# is the version number of the cluster_cli library being used of the form a.b.c
@@ -49,6 +49,6 @@ package cluster_cli;
  * the software in this way will not show any performance improvement but does allow checking of the
  * application prior to distribution over a real network.
  *
- * The test package for cluster_cli sahows how the application can be tested on a single workstation,
+ * The test package for cluster_cli shows how the application can be tested on a single workstation,
  * simulating multiple nodes.
  */
