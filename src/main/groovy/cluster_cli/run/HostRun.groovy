@@ -30,6 +30,7 @@ class HostRun {
   Class emitClass
   Class collectClass
   String fileBasename
+  int portNumber = 56789  //port number used in TCPIP communications
 
   /**
    * A class used to run the host node of a cluster
@@ -113,9 +114,17 @@ class HostRun {
 /**
  * invoke is the only method in the class HostRun() and is used
  * to create the application process architecture as specified in the
- * structureFile.
+ * structureFile.  The parameterless version produces minimal output during
+ * the application loading phase
  */
   void invoke() {
+    invoke(false)
+  }
+  /**
+   *
+   * @param verbose if true prints comprehensive details of the application loading process
+   */
+  void invoke(boolean verbose) {
     if (!ExtractVersion.extractVersion(version, nature)){
       println "cluster_cli:Version $version needs to be downloaded, please modify the gradle.build file"
       System.exit(-1)
@@ -137,7 +146,7 @@ class HostRun {
 //    String hostIP = structure[0].hostAddress
     String parsedVersion = structure[0].version
     assert parsedVersion == version:"Host: parser ($parsedVersion) and run ($version) version tags do not match"
-    println "cluster_cli: HostRun Invoke System version: $version "
+    if (verbose) println "Host starting version: $version "
     // no longer need structure[0]
     structure.remove(0)
 
@@ -149,25 +158,26 @@ class HostRun {
 //create the host node
     TCPIPNodeAddress hostNodeAddress
     if (nature == "Net")
-      hostNodeAddress = new TCPIPNodeAddress( 1000)  // find most global IP address available
+      hostNodeAddress = new TCPIPNodeAddress( portNumber)  // find most global IP address available
     else
-      hostNodeAddress = new TCPIPNodeAddress( "127.0.0.1", 1000)  // assumed local host IP
+      hostNodeAddress = new TCPIPNodeAddress( "127.0.0.1", portNumber)  // assumed local host IP
     Node.getInstance().init(hostNodeAddress)
     String nodeIP = hostNodeAddress.getIpAddress()
 //    assert hostIP == nodeIP: "Expected hostIP: host does not match actual nodeIP $nodeIP"
 // get all nodes' IP addresses
     def fromNodes = NetChannel.numberedNet2One(1)
-    println "Host: Please start $totalNodes nodes with $nodeIP as host node; creating $totalWorkers internal processes and $requiredManagers manager processes"
+    println "Host starting needing $totalNodes nodes; with $nodeIP using port $portNumber as host node; "
+    if (verbose) println "creating $totalWorkers internal processes and $requiredManagers manager processes"
     List<String> nodeIPstrings = []
 // assumes nodes have created the corresponding net input channels
     for (n in 1..totalNodes) nodeIPstrings << (fromNodes.read() as String)
-    println "Node IPs are $nodeIPstrings"
+    if (verbose) println "Node IPs are $nodeIPstrings"
     processingStart = System.currentTimeMillis()
 // create the hostToNodes channels
     ChannelOutputList hostToNodes     // writes to node[i] fromHost using vcn = 1
     hostToNodes = []
     nodeIPstrings.each { nodeIPString ->
-      def nodeAddress = new TCPIPNodeAddress(nodeIPString, 1000)
+      def nodeAddress = new TCPIPNodeAddress(nodeIPString, portNumber)
       def toNode = NetChannel.one2net(nodeAddress, 1, new CodeLoadingChannelFilter.FilterTX())
       hostToNodes.append(toNode)
     }
@@ -176,18 +186,18 @@ class HostRun {
     ClassDefinitions classDefinitions = new ClassDefinitions(emitClass: emitClass,
         collectClass: collectClass, version: version)
     for (n in 0..<totalNodes) hostToNodes[n].write(classDefinitions)
-    println "Host has sent class definitions to each node"
+    if (verbose) println "Host has sent class definitions to each node"
 
 // find from structure those nodes that are allocated to fixed IPs
     List preAllocatedIPs = []
     structure.each { record -> if (record.fixedIPAddresses != []) preAllocatedIPs = preAllocatedIPs + record.fixedIPAddresses
     }
-    println "PreAllocated nodes is $preAllocatedIPs"
+    if (verbose) println "PreAllocated nodes is $preAllocatedIPs"
 // now check that all the preAllocatedIPs have actually been started
     boolean preAllocated = true
     preAllocatedIPs.each { ip ->
       if (!nodeIPstrings.contains(ip)) {
-        println "Preallocated node $ip not in node IPs that have started"
+        println "Preallocated node $ip not in node IPs $preAllocatedIPs"
         preAllocated = false
       } else nodeIPstrings.remove(ip)
     }
@@ -206,7 +216,7 @@ class HostRun {
       if (record.fixedIPAddresses == []) {
         // allocate from remaining nodes in nodeIPstrings
         for (n in 1..record.nodes) {
-          println "Host popping from $nodeIPstrings"
+          if (verbose) println "Host popping from $nodeIPstrings"
           record.allocatedNodeIPs << nodeIPstrings.pop()
         }
       } else {
@@ -215,10 +225,12 @@ class HostRun {
       }
     } // pre-allocated nodes have been assigned
 // now print the updated structure , testing only
-    int sno = 0
-    structure.each {
-      println "$sno $it"
-      sno = sno + 1
+    if (verbose) {
+      int sno = 0
+      structure.each {
+        println "$sno $it"
+        sno = sno + 1
+      }
     }
 // now send structure to each nodeLoader
     for (n in 0..<totalNodes) hostToNodes[n].write(structure)
@@ -228,7 +240,7 @@ class HostRun {
     for (n in 1..totalNodes) acks << (fromNodes.read() as Acknowledgement)
     acks.each { ack -> assert ack.ackValue == 1:
         "Expecting ack value 1 got ${ack.ackValue} from ${ack.ackString}" }
-    println "Host has completed phase 1"
+    if (verbose) println "Host has completed phase 1"
 
 // can now start phase 2 - all net input channels are created in host and nodeLoaders
     for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(2, "host"))
@@ -242,9 +254,9 @@ class HostRun {
       def readyToSend = NetChannel.numberedNet2One(sendIndex)
       def readyToRead = NetChannel.numberedNet2One(readIndex)
       sendReadyInputChannels << ([readyToSend, readyToRead] as List<ChannelInput>)
-      println "sendReadyInputChannels manager $rm" +
-          "\n\t readyToSend: ${readyToSend.getLocation()}" +
-          "\n\t readyToRead: ${readyToRead.getLocation()}"
+      if (verbose) println "sendReadyInputChannels manager $rm" +
+                            "\n\t readyToSend: ${readyToSend.getLocation()}" +
+                            "\n\t readyToRead: ${readyToRead.getLocation()}"
     }
 
 // input channels now created for all managers , await nodes completing their input channels
@@ -252,7 +264,7 @@ class HostRun {
     for (n in 1..totalNodes) acks << (fromNodes.read() as Acknowledgement)
     acks.each { ack -> assert ack.ackValue == 2:
         "Expecting ack value 2 got ${ack.ackValue} from ${ack.ackString}" }
-    println "Host has completed phase 2"
+    if (verbose) println "Host has completed phase 2"
 // now start phase 3, creation of the corresponding net output channels
     for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(3, "host"))
 // create ChannelOutputLists for useIndex and terminate for each manager
@@ -261,12 +273,14 @@ class HostRun {
       ChannelOutputList subList = new ChannelOutputList()
       // index relates to cluster rm; terminate relates to cluster rm+1
       for ( i in 0 ..< structure[rm].allocatedNodeIPs.size()){
-        def nextNodeAddress = new TCPIPNodeAddress(structure[rm].allocatedNodeIPs[i], 1000)
+        def nextNodeAddress = new TCPIPNodeAddress(structure[rm].allocatedNodeIPs[i], portNumber)
         subList.append(NetChannel.one2net(nextNodeAddress, 20))
       }
-      println "Manager $rm ChannelOutputList"
-      subList.each{entry ->
-        for ( i in 0 ..< entry.size()) println "index: $i: ${(entry[i] as NetChannelOutput).getLocation()}"
+      if (verbose) {
+        println "Manager $rm ChannelOutputList"
+        subList.each { entry ->
+          for (i in 0..<entry.size()) println "index: $i: ${(entry[i] as NetChannelOutput).getLocation()}"
+        }
       }
       indexList << subList
     } // requiredManagers
@@ -274,15 +288,15 @@ class HostRun {
     for (n in 1..totalNodes) acks << (fromNodes.read() as Acknowledgement)
     acks.each { ack -> assert ack.ackValue == 3:
         "Expecting ack value 3 got ${ack.ackValue} from ${ack.ackString}" }
-    println "Host has completed phase 3"
+    if (verbose) println "Host has completed phase 3"
 
 // now start phase 4, creation of the manager process network
     for (n in 0..<totalNodes) hostToNodes[n].write(new Acknowledgement(4, "host"))
 
-    println "Host host now invoking $requiredManagers manager process(es)"
+    if (verbose) println "Host host now invoking $requiredManagers manager process(es)"
     List<CSProcess> hostManagers = []
     for ( i in 0 ..< requiredManagers){
-      println "Host creating manager $i"
+      if (verbose) println "Host creating manager $i"
       Manager manager = new Manager(
           readyToSend: sendReadyInputChannels[i][0],
           readyToRead: sendReadyInputChannels[i][1],
@@ -292,11 +306,11 @@ class HostRun {
           nReadInternals: structure[i+1].workers ,
           clusterIndex: i
       )
-      println "Host created manager $i"
+      if (verbose) println "Host created manager $i"
       hostManagers << manager
     }
     new PAR(hostManagers).run()
-    println "Host Managers have terminated"
+    if (verbose) println "Host Managers have terminated"
 // host is terminating
     endTime = System.currentTimeMillis()
     totalElapsed = endTime - startTime

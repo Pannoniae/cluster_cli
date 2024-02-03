@@ -24,7 +24,7 @@ class Collector implements CSProcess{
     ObjectOutputStream outStream
     if (outFileName != null ) {
       String outFileString = "./${outFileName}-${nodeIndex}-${internalIndex}.cliCout"
-      println "Collector [$clusterIndex, $nodeIndex, $internalIndex]writing to $outFileString"
+      println "Collector [$clusterIndex, $nodeIndex, $internalIndex] writing to $outFileString"
       File objFile = new File(outFileString)
       outStream = objFile.newObjectOutputStream()
     }

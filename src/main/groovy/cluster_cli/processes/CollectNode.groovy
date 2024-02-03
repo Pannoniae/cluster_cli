@@ -24,7 +24,7 @@ class CollectNode implements CSProcess{
 
   @Override
   void run() {
-    println "Collect Node starting: $clusterIndex, $nodeIndex, $nInternals"
+    //println "Collect Node starting: $clusterIndex, $nodeIndex, $nInternals"
     long startTime, endTime
     def requestChannel = Channel.any2one()
     def objectChannels = Channel.one2oneArray(nInternals)

@@ -11,6 +11,7 @@ import cluster_cli.records.VersionControl
 import groovy_jcsp.ChannelOutputList
 import groovy_jcsp.PAR
 import jcsp.lang.CSProcess
+import jcsp.lang.CSTimer
 import jcsp.net2.NetAltingChannelInput
 import jcsp.net2.NetChannel
 import jcsp.net2.NetChannelInput
@@ -33,6 +34,8 @@ class NodeRun {
 
   String hostIP, localIP
   String version = VersionControl.versionTag
+  int portNumber = 56789  //port number used in TCPIP communications
+
 /**
  * Invoke a node
  * @param hostIP the IP address of the host
@@ -54,8 +57,19 @@ class NodeRun {
  * invoke() is the only method in the class NodeRun.
  * It is used to run the application loading code at a node by communicating
  * with the host node to obtain the required information and application code.
+ * With no parameters defaults to minimal output during application loading phase.
  */
   void invoke(){
+    invoke(false)
+  }
+  /**
+   *
+   * @param verbose if true prints details of the application loading phase
+   */
+  void invoke(boolean verbose){
+    // added in V1.0.8 to ensure nodes wait 3 seconds until host has started
+    CSTimer timer = new CSTimer()
+    timer.sleep(3000)
     long startTime
     startTime = System.currentTimeMillis()
     List<ParseRecord> structure 
@@ -65,17 +79,17 @@ class NodeRun {
 // create this nodeLoader and make connections to and from host
     TCPIPNodeAddress nodeAddress
     if (localIP == null)
-      nodeAddress = new TCPIPNodeAddress(1000) // most global IP address
+      nodeAddress = new TCPIPNodeAddress(portNumber) // most global IP address
     else
-      nodeAddress = new TCPIPNodeAddress(localIP,1000)
+      nodeAddress = new TCPIPNodeAddress(localIP,portNumber)
     Node.getInstance().init(nodeAddress)
     String nodeIP = nodeAddress.getIpAddress()
-    println "Node $nodeIP has started with host $hostIP using version $version"
+    println "Node $nodeIP has started with host $hostIP on port $portNumber using version $version"
     def fromHost = NetChannel.numberedNet2One(1, new CodeLoadingChannelFilter.FilterRX())
-    def hostAddress = new TCPIPNodeAddress(hostIP, 1000)
+    def hostAddress = new TCPIPNodeAddress(hostIP, portNumber)
     def toHost = NetChannel.any2net(hostAddress, 1)
-    println "Node $nodeIP has toHost channel ${toHost.getLocation()}" +
-        "\n fromHost channel ${fromHost.getLocation()}"
+    if (verbose) println "Node $nodeIP has toHost channel ${toHost.getLocation()}" +
+                          "\n fromHost channel ${fromHost.getLocation()}"
     toHost.write(nodeIP)
 // now get class definitions from host
     ClassDefinitions classDefinitions = (fromHost.read() as ClassDefinitions)
@@ -85,12 +99,12 @@ class NodeRun {
     if (dataFromHost instanceof TerminalIndex) System.exit(-2)  // instant termination
 // termination occurs if required IP addresses have not been assigned to nodes
     structure = (dataFromHost as List<ParseRecord>)
-    structure.each {println "$it"}
+    if (verbose) structure.each {println "$it"}
     Acknowledgement ack
     ack = new Acknowledgement(1, nodeIP)
 //    println "sending $ack"
     toHost.write(ack)
-    println "Node $nodeIP has completed phase 1"
+    if (verbose) println "Node $nodeIP has completed phase 1"
     ack = fromHost.read() as Acknowledgement
     assert ack.ackValue == 2: "Expected phase 2 start but got ${ack.ackValue}"
 // can now start creating net input channels for this node
@@ -99,7 +113,7 @@ class NodeRun {
     structureMax = structure.size() - 1
     clusterIndex = 0
     while (!(structure[clusterIndex].allocatedNodeIPs.contains(nodeIP))) clusterIndex++
-    println "Node processing cluster $clusterIndex"
+    if (verbose) println "Node processing cluster $clusterIndex"
 // can assume node is present in one cluster; clusterIndex holds index of cluster
 // pre-declare the input channels
     NetChannelInput useIndex
@@ -109,23 +123,23 @@ class NodeRun {
     switch (clusterIndex){
       case 0: // an emit node - write buffer only
         useIndex = NetChannel.numberedNet2One(20)
-        println "useIndex: ${useIndex.getLocation()}"
+        if (verbose) println "useIndex: ${useIndex.getLocation()}"
         break
       case structureMax: // a collect node - read buffer only
         fromPreviousNode = NetChannel.numberedNet2One(21, new CodeLoadingChannelFilter.FilterRX())
-        println "fromPreviousNode: ${fromPreviousNode.getLocation()}"
+        if (verbose) println "fromPreviousNode: ${fromPreviousNode.getLocation()}"
         break
       default: // a work node - both buffers
         useIndex = NetChannel.numberedNet2One(20)
         fromPreviousNode = NetChannel.numberedNet2One(21, new CodeLoadingChannelFilter.FilterRX())
-        println "useIndex: ${useIndex.getLocation()}" +
-            "\nfromPreviousNode: ${fromPreviousNode.getLocation()}"
+        if (verbose) println "useIndex: ${useIndex.getLocation()}" +
+                              "\nfromPreviousNode: ${fromPreviousNode.getLocation()}"
         break
     }
 // tell host all the node input channels have been created end of phase 2
     ack = new Acknowledgement(2, nodeIP)
     toHost.write(ack)
-    println "Node $nodeIP has completed phase 2"
+    if (verbose) println "Node $nodeIP has completed phase 2"
     ack = fromHost.read() as Acknowledgement
     assert ack.ackValue == 3: "Expected phase 3 start but got ${ack.ackValue}"
 // can now create the net output channels
@@ -138,18 +152,18 @@ class NodeRun {
         int sendIndex = 100
         readyToSend = NetChannel.any2net(hostAddress, sendIndex)
         for ( i in 0 ..< structure[1].allocatedNodeIPs.size()){
-          def nextNodeAddress = new TCPIPNodeAddress(structure[1].allocatedNodeIPs[i], 1000)
+          def nextNodeAddress = new TCPIPNodeAddress(structure[1].allocatedNodeIPs[i], portNumber)
           NetChannelOutput toNext = NetChannel.one2net(nextNodeAddress, 21, new CodeLoadingChannelFilter.FilterTX())
           toNextNodes.append(toNext)
         }
-        println "Emit readyToSend: ${readyToSend.getLocation()}"
-        for ( i in 0 ..< toNextNodes.size())println "Emit toNext $i: ${(toNextNodes[i] as NetChannelOutput).getLocation()}"
+        if (verbose) println "Emit readyToSend: ${readyToSend.getLocation()}"
+        if (verbose) for ( i in 0 ..< toNextNodes.size())println "Emit toNext $i: ${(toNextNodes[i] as NetChannelOutput).getLocation()}"
         break
       case structureMax: // a collect node - read buffer only
         int managerIndex = clusterIndex - 1
         int readIndex = (managerIndex * 2) + 101
         readyToRead = NetChannel.any2net(hostAddress, readIndex)
-        println "Collect readyToRead: ${readyToRead.getLocation()}"
+        if (verbose) println "Collect readyToRead: ${readyToRead.getLocation()}"
         break
       default:  // a work node - both buffers
         int sendIndex = (clusterIndex * 2) +100
@@ -158,22 +172,22 @@ class NodeRun {
         int readIndex = (managerIndex * 2) + 101
         readyToRead = NetChannel.any2net(hostAddress, readIndex)
         for ( i in 0 ..< structure[clusterIndex+1].allocatedNodeIPs.size()){
-          def nextNodeAddress = new TCPIPNodeAddress(structure[clusterIndex+1].allocatedNodeIPs[i], 1000)
+          def nextNodeAddress = new TCPIPNodeAddress(structure[clusterIndex+1].allocatedNodeIPs[i], portNumber)
           NetChannelOutput toNext = NetChannel.one2net(nextNodeAddress, 21, new CodeLoadingChannelFilter.FilterTX())
           toNextNodes.append(toNext)
         }
-        println "Work readyToSend: ${readyToSend.getLocation()}"
-        println "Work readyToRead: ${readyToRead.getLocation()}"
-        for ( i in 0 ..< toNextNodes.size())println "Work toNext $i: ${(toNextNodes[i] as NetChannelOutput).getLocation()}"
+        if (verbose) println "Work readyToSend: ${readyToSend.getLocation()}"
+        if (verbose) println "Work readyToRead: ${readyToRead.getLocation()}"
+        if (verbose) for ( i in 0 ..< toNextNodes.size())println "Work toNext $i: ${(toNextNodes[i] as NetChannelOutput).getLocation()}"
         break
     }
-    println "Node $nodeIP has completed phase 3"
+    if (verbose) println "Node $nodeIP has completed phase 3"
     ack = new Acknowledgement(3, nodeIP)
     toHost.write(ack)
 
     ack = fromHost.read() as Acknowledgement
     assert ack.ackValue == 4: "Expected phase 4 start but got ${ack.ackValue}"
-    println "Node $nodeIP is invoking node process"
+    if (verbose) println "Node $nodeIP is invoking node process"
 // now start phase 4 where the correct Node Process is created
     CSProcess process
     switch (clusterIndex){

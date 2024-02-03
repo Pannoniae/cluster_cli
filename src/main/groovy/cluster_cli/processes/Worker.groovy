@@ -20,7 +20,7 @@ class Worker implements CSProcess{
     boolean running
 //    println "Worker [$clusterIndex, $nodeIndex, $workerIndex] running using $updateParam"
     List parameterValues = ExtractParameters.extractParams(updateParam[0] as List, updateParam[1] as List)
-    println "Worker [$clusterIndex, $nodeIndex, $workerIndex] running using parameters: $parameterValues"
+//    println "Worker [$clusterIndex, $nodeIndex, $workerIndex] running using parameters: $parameterValues"
     running = true
     while (running){
       toReadBuffer.write(workerIndex)
@@ -43,7 +43,7 @@ class Worker implements CSProcess{
         clusterIndex: clusterIndex
       )
     )
-    println "Worker [$clusterIndex, $nodeIndex, $workerIndex] terminated"
+    //println "Worker [$clusterIndex, $nodeIndex, $workerIndex] terminated"
 
   }
 }

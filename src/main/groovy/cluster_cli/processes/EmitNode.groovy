@@ -23,7 +23,7 @@ class EmitNode implements CSProcess{
 
   @Override
   void run() {
-    println "Emit Node starting: $clusterIndex, $nodeIndex, $nInternals"
+    //println "Emit Node starting: $clusterIndex, $nodeIndex, $nInternals"
     long startTime, endTime
     def internalsToWriteBuffer = Channel.any2one()
     List <CSProcess> network = []

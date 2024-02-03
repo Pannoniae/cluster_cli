@@ -18,7 +18,7 @@ class Manager implements CSProcess{
 
   @Override
   void run() {
-    println "Manager $clusterIndex running"
+    //println "Manager $clusterIndex running"
     int queueSize = nReadInternals * nReadNodes
     Integer[] indexBuffer = new Integer[queueSize]
     int entries, writeTo, readFrom, terminated
@@ -67,7 +67,7 @@ class Manager implements CSProcess{
       managerPreCon = [entries > 0, entries < queueSize]
     } // running
     // manager can now terminate
-    println "Manager $clusterIndex  terminated"
+    //println "Manager $clusterIndex  terminated"
   } // run()
 
 }
