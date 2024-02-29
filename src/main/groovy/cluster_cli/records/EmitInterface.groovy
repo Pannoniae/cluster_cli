@@ -8,7 +8,7 @@ interface EmitInterface <T> {
   /**
    * create() is used to generate new instance of data objects in the Emitter process
    *
-   * @return A new instance of type T
+   * @return A new instance of type T or null once all the data objects have been created
    */
   T create()
 }

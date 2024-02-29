@@ -5,12 +5,12 @@ Emitter(e2wbChan, D.n.e.x, nodeN, maxData) =
 -- maxData the limit value for x in
 -- D.n.e.x the generated data objects where, n is node index, e is emitter index
 -- and x is the specific object index
-    e2wbChan ! nodeN.D.n.e.x ->
-    if x == maxData then
-        e2wbChan ! nodeN.UT ->
-        SKIP
-    else 
-        Emitter(e2wbChan, gen(D.n.e.x), nodeN, maxData)
+  e2wbChan ! nodeN.D.n.e.x ->
+  if x == maxData then
+    e2wbChan ! nodeN.UT ->
+    SKIP
+  else 
+    Emitter(e2wbChan, gen(D.n.e.x), nodeN, maxData)
 
 
 WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes) =
@@ -21,22 +21,22 @@ WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingN
 -- nodeN the index of this node in its cluster
 -- nWriters is the number of internal processes in the node
 -- nReadingNodes is the number of nodes in the reading cluster
-    if nWriters == 0 then
-        if nReadingNodes == 0 then -- UT sent to all reading nodes
-            rtsChan ! 0 ->     -- to terminate the manager
-            SKIP
-        else    -- send UT to each of the creading nodes
-            transferChan ! nReadingNodes.UT ->    -- nReadingNodes iterates the read node ids
-            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes-1)
+  if nWriters == 0 then
+    if nReadingNodes == 0 then -- UT sent to all reading nodes
+      rtsChan ! 0 ->   -- to terminate the manager
+      SKIP
+    else  -- send UT to each of the reading nodes
+      transferChan ! nReadingNodes.UT ->  -- nReadingNodes iterates the read node ids
+      WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes-1)
+  else
+    i2wbChan ? nodeN.o ->
+    if o == UT then
+      WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters-1, nReadingNodes)
     else
-        i2wbChan ? nodeN.o ->
-        if o == UT then
-            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters-1, nReadingNodes)
-        else
-            rtsChan ! nodeN ->
-            useChan ? nodeN.readingNodeID ->
-            transferChan ! readingNodeID.o ->
-            WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes)    
+      rtsChan ! nodeN ->
+      useChan ? nodeN.readingNodeID ->
+      transferChan ! readingNodeID.o ->
+      WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes)  
 
 
 ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, buffer, bufferMax) =
@@ -54,45 +54,45 @@ ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNo
 -- indicates that all the sending nodes have terminated
 -- buffer the queue holding objects waiting to be processed, initially empty
 -- bufferMax the maximum size of the buffer, is equal to number of Internal processes
-    if nSendNodes == 0 then     -- all senders have terminated
-        if length(buffer) == 0 then     -- buffer is empty
-            if nInternals == 0 then    -- all local internal processes have been terminated
-                SKIP
-            else  
-                i2rbChan ? nodeN.internalID ->
-                rb2iChan ! nodeN.internalID.UT ->
-                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals-1, nSendNodes, buffer, bufferMax) 
-        else  -- terminating but still objects in buffer
-            i2rbChan ? nodeN.internalID ->
-            rb2iChan ! nodeN.internalID.head(buffer) ->
-            ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
-    else    --normal buffer operation as a queue
-        if length(buffer) == 0 then     -- can only accept Sender inputs
-            transferChan ? nodeN.o ->
-            if o == UT then     -- sender has terminated
-               ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
-            else -- put o into buffer
-                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
-        else
-            if length(buffer) == bufferMax then  -- bufSfer is full wait for collector to request
-                i2rbChan ? nodeN.internalID ->
-                rb2iChan ! nodeN.internalID.head(buffer) ->
-                rtrChan ! nodeN ->
-                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
-            else    -- normal operation choice of inputs allowed
-                ( transferChan ? nodeN.o ->
-                if o == UT then     -- sender has terminated
-                    ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
-                else -- put o into buffer
-                    ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
-                ) 
-                [] 
-                (
-                i2rbChan ? nodeN.internalID ->
-                rb2iChan ! nodeN.internalID.head(buffer) ->
-                rtrChan ! nodeN ->
-                ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
-                )
+  if nSendNodes == 0 then   -- all senders have terminated
+    if length(buffer) == 0 then   -- buffer is empty
+      if nInternals == 0 then  -- all local internal processes have been terminated
+        SKIP
+      else  
+        i2rbChan ? nodeN.internalID ->
+        rb2iChan ! nodeN.internalID.UT ->
+        ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals-1, nSendNodes, buffer, bufferMax) 
+    else  -- terminating but still objects in buffer
+      i2rbChan ? nodeN.internalID ->
+      rb2iChan ! nodeN.internalID.head(buffer) ->
+      ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+  else  --normal buffer operation as a queue
+    if length(buffer) == 0 then   -- can only accept Sender inputs
+      transferChan ? nodeN.o ->
+      if o == UT then   -- sender has terminated
+         ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
+      else -- put o into buffer
+        ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
+    else
+      if length(buffer) == bufferMax then  -- bufSfer is full wait for collector to request
+        i2rbChan ? nodeN.internalID ->
+        rb2iChan ! nodeN.internalID.head(buffer) ->
+        rtrChan ! nodeN ->
+        ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+      else  -- normal operation choice of inputs allowed
+        ( transferChan ? nodeN.o ->
+        if o == UT then   -- sender has terminated
+          ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes-1, buffer, bufferMax)
+        else -- put o into buffer
+          ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
+        ) 
+        [] -- non-deterministic external choice
+        (
+        i2rbChan ? nodeN.internalID ->
+        rb2iChan ! nodeN.internalID.head(buffer) ->
+        rtrChan ! nodeN ->
+        ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, tail(buffer), bufferMax) 
+        )
 
 
 Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN) =
@@ -103,13 +103,13 @@ Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN) =
 -- nodeN index of the node within the Collect cluster that contains this Collector
 -- internalN the index of this Collector within the node
 
-    c2rbChan ! nodeN.internalN ->
-    rb2cChan ? nodeN.internalN.o ->
-    c2dcChan ! o ->
-    if o == UT then
-        SKIP
-    else
-        Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN)
+  c2rbChan ! nodeN.internalN ->
+  rb2cChan ? nodeN.internalN.o ->
+  c2dcChan ! o ->
+  if o == UT then
+    SKIP
+  else
+    Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN)
 
 DataCheck(dataChan, nCollectors, expectedResult, completed) =
 -- dataChan used to read data objects from all the Collector processes in the Collect Cluster
@@ -122,17 +122,17 @@ DataCheck(dataChan, nCollectors, expectedResult, completed) =
 -- have been processed and removed from the expectedResult set, which is the only time
 -- completed can be set true
 
-    if (nCollectors == 0) then
-        if completed then
-            CollectEnd()
-        else
-            SKIP    -- it should never get here if it does the assertions will fail
+  if (nCollectors == 0) then
+    if completed then
+      CollectEnd()
     else
-        dataChan ? o ->
-        if member(o, expectedResult) then
-            DataCheck(dataChan, nCollectors,  diff(expectedResult, {o}), false)
-        else    -- must be a UT
-            DataCheck (dataChan, nCollectors-1, expectedResult, empty(expectedResult))
+      SKIP  -- it should never get here if it does the assertions will fail
+  else
+    dataChan ? o ->
+    if member(o, expectedResult) then
+      DataCheck(dataChan, nCollectors,  diff(expectedResult, {o}), false)
+    else  -- must be a UT
+      DataCheck (dataChan, nCollectors-1, expectedResult, empty(expectedResult))
 
 Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN ) =
 -- w2rbChan used to Worker index to the node's ReadBuffer
@@ -141,14 +141,14 @@ Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN ) =
 -- w2wb used by the Worker to send processed data object the the node's WriteBuffer process
 -- nodeN the index of the node within the cluster
 -- workerN the index of the Worker process within the node.
-    w2rbChan ! nodeN.workerN ->
-    rb2wChan ? nodeN.workerN.o ->
-    if o == UT then 
-        w2wbChan ! nodeN.UT ->
-        SKIP
-    else
-        w2wbChan !nodeN.o ->  -- does nothing!!
-        Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN )
+  w2rbChan ! nodeN.workerN ->
+  rb2wChan ? nodeN.workerN.o ->
+  if o == UT then 
+    w2wbChan ! nodeN.UT ->
+    SKIP
+  else
+    w2wbChan !nodeN.o ->  -- does nothing!!
+    Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN )
 
 Manager(rtsChan, useChan, rtrChan, nWriteEnds, mQueue, mQMax) = 
 -- rtsChan used to read node index from an associated WriteBuffer
@@ -168,38 +168,38 @@ Manager(rtsChan, useChan, rtrChan, nWriteEnds, mQueue, mQMax) =
 -- the number of nodes in the reading cluster multiplied by the number of internal
 -- processes in each of the reading nodes
 
-    if nWriteEnds == 0 then --all the WriteBuffers have terminated
-        SKIP
+  if nWriteEnds == 0 then --all the WriteBuffers have terminated
+    SKIP
+  else
+    if length(mQueue)  == mQMax then 
+      -- must read a rtsChan message and return Reading Node ID from queue
+      rtsChan ? writeNodeID ->
+      if writeNodeID == 0 then  --0 is the terminator
+        Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
+      else
+        useChan ! writeNodeID.head(mQueue) ->
+        Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
     else
-        if length(mQueue)  == mQMax then 
-            -- must read a rtsChan message and return Reading Node ID from queue
-            rtsChan ? writeNodeID ->
-            if writeNodeID == 0 then    --0 is the terminator
-                Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
-            else
-                useChan ! writeNodeID.head(mQueue) ->
-                Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
+      if length(mQueue)  == 0 then   
+        -- queue is empty must wait for a Read Node to put its node id into queue
+        rtrChan ? readNodeID ->
+        Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax )
+      else
+        -- queue is neither full nor empty can accept either input
+        (  
+        rtsChan ? writeNodeID ->
+        if writeNodeID == 0 then
+          Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
         else
-            if length(mQueue)  == 0 then   
-                -- queue is empty must wait for a Read Node to put its node id into queue
-                rtrChan ? readNodeID ->
-                Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax )
-            else
-                -- queue is neither full nor empty can accept either input
-                (    
-                rtsChan ? writeNodeID ->
-                if writeNodeID == 0 then
-                    Manager(rtsChan, useChan, rtrChan, nWriteEnds-1, mQueue, mQMax)
-                else
-                    useChan ! writeNodeID.head(mQueue) ->
-                    Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
-                )
-                []
-                (
-                    rtrChan ? readNodeID ->
-                    Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax)
-                )
-               
+          useChan ! writeNodeID.head(mQueue) ->
+          Manager(rtsChan, useChan, rtrChan, nWriteEnds, tail(mQueue), mQMax)
+        )
+        []
+        (
+          rtrChan ? readNodeID ->
+          Manager(rtsChan, useChan, rtrChan, nWriteEnds, concat(<mQueue, <readNodeID>>), mQMax)
+        )
+         
 
 -- channel and process used to model system termination, CollectEnd can only be called
 -- when DataCheck has terminated  correctly
