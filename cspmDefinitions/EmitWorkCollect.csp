@@ -51,17 +51,25 @@ WriteBuffersEmit() = |||n:{1..emitNodes} @
 EmitCluster() = Emitters() [|a_eTOwb|] WriteBuffersEmit()
 
 --Work cluster definitions
-ReadBuffersWork() = |||w:{1..workNodes} @
-                ReadBuffer(wTOrb, rbTOw, transferEW, rtrWork, w, workers, emitNodes, <>, workers)
+ReadBuffersWork() = 
+    |||w:{1..workNodes} @
+        ReadBuffer(wTOrb, rbTOw, transferEW, rtrWork, 
+            w, workers, emitNodes, <>, workers)
 
-Workers() = |||w:{1..workNodes}, wID:{1..workers} @
-                Worker(wTOrb, rbTOw, wTOwb, w, wID)
+Workers() = 
+    |||w:{1..workNodes}, wID:{1..workers} @
+        Worker(wTOrb, rbTOw, wTOwb, w, wID)
 
-WriteBuffersWork() = |||w:{1..workNodes} @
-                WriteBuffer(wTOwb, rtsWork, useWork, transferWC, w, workers, collectNodes)
+WriteBuffersWork() = 
+    |||w:{1..workNodes} @
+        WriteBuffer(wTOwb, rtsWork, useWork, 
+            transferWC, w, workers, collectNodes)
 
-WorkCluster() = (ReadBuffersWork() [|a_workers|] Workers())
-                [|a_wTOwb|]WriteBuffersWork()
+WorkCluster() = (ReadBuffersWork() 
+                    [|a_workers|] 
+                Workers())
+                    [|a_wTOwb|]
+                WriteBuffersWork()
 
 
 -- Collect Cluster definition
@@ -81,14 +89,14 @@ baseEWQueue = <1..workNodes>
 ewQueue = baseEWQueue
 -- 2 workers per node
 --ewQueue = baseEWQueue ^ baseEWQueue
-print ewQueue
+--print ewQueue
 
 baseWCQueue = <1..collectNodes>
 -- 1 collector per node
 wcQueue = baseWCQueue
 -- 2 collectors per node
 --wcQueue = baseWCQueue ^ baseWCQueue
-print wcQueue
+--print wcQueue
 -- EWCsystem Definition
 EWCsystem = (((EmitCluster() [|a_transferEW|] WorkCluster())
                 [|a_transferWC|] CollectCluster())
@@ -98,17 +106,19 @@ EWCsystem = (((EmitCluster() [|a_transferEW|] WorkCluster())
 -- Test System Definition
 TestSystem = finished ! true -> TestSystem
 
-assert EWCsystem :[deadlock free [F]]
-assert EWCsystem :[deadlock free [FD]]
-assert EWCsystem :[divergence free]
+-- following commented out for modles in refinement.csp
 
-assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb,
-                        rtsWork, useWork, rtrCollect,
-                        transferWC, cTOrb, rbTOc, cTOdc|}) [T=TestSystem
-assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb,
-                        rtsWork, useWork, rtrCollect,
-                        transferWC, cTOrb, rbTOc, cTOdc|}) [F=TestSystem
-assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb, 
-                        rtsWork, useWork, rtrCollect,
-                        transferWC, cTOrb, rbTOc, cTOdc|}) [FD=TestSystem
+--assert EWCsystem :[deadlock free]
+--assert EWCsystem :[deterministic]
+--assert EWCsystem :[divergence free]
+
+--assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb,
+--                        rtsWork, useWork, rtrCollect,
+--                        transferWC, cTOrb, rbTOc, cTOdc|}) [T=TestSystem
+--assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb,
+--                        rtsWork, useWork, rtrCollect,
+--                        transferWC, cTOrb, rbTOc, cTOdc|}) [F=TestSystem
+--assert (EWCsystem \ {|eTOwb, transferEW, rtsEmit, useEmit, rtrWork, wTOrb, rbTOw, wTOwb, 
+--                        rtsWork, useWork, rtrCollect,
+--                        transferWC, cTOrb, rbTOc, cTOdc|}) [FD=TestSystem
 

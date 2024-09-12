@@ -12,6 +12,14 @@ Emitter(e2wbChan, D.n.e.x, nodeN, maxData) =
   else 
     Emitter(e2wbChan, gen(D.n.e.x), nodeN, maxData)
 
+TestEmitter(e2wChan, D.1.1.x, maxData) =
+  e2wChan ! D.1.1.x ->
+  if x == maxData then
+    e2wChan ! UT ->
+    SKIP
+  else
+    TestEmitter(e2wChan, gen(D.1.1.x), maxData)
+
 
 WriteBuffer(i2wbChan, rtsChan, useChan, transferChan, nodeN, nWriters, nReadingNodes) =
 -- i2wbChan used to communicate objects from internal processes to thie WriteBuffer
@@ -74,7 +82,7 @@ ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNo
       else -- put o into buffer
         ReadBuffer(i2rbChan, rb2iChan, transferChan, rtrChan, nodeN, nInternals, nSendNodes, concat(<buffer,<o>>), bufferMax)   
     else
-      if length(buffer) == bufferMax then  -- bufSfer is full wait for collector to request
+      if length(buffer) == bufferMax then  -- buffer is full wait for collector to request
         i2rbChan ? nodeN.internalID ->
         rb2iChan ! nodeN.internalID.head(buffer) ->
         rtrChan ! nodeN ->
@@ -110,6 +118,15 @@ Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN) =
     SKIP
   else
     Collector(c2rbChan, rb2cChan, c2dcChan, nodeN, internalN)
+
+
+TestCollector(w2cChan,c2dcChan) =
+  w2cChan ? o ->
+  c2dcChan ! o ->
+  if o == UT then
+    SKIP
+  else
+    TestCollector(w2cChan, c2dcChan)
 
 DataCheck(dataChan, nCollectors, expectedResult, completed) =
 -- dataChan used to read data objects from all the Collector processes in the Collect Cluster
@@ -149,6 +166,15 @@ Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN ) =
   else
     w2wbChan !nodeN.o ->  -- does nothing!!
     Worker(w2rbChan, rb2wChan, w2wbChan, nodeN, workerN )
+
+TestWorker(e2wChan, w2cChan) =
+  e2wChan ? o ->
+  if o == UT then
+    w2cChan ! UT ->
+    SKIP
+  else
+    w2cChan ! o ->
+    TestWorker(e2wChan, w2cChan)
 
 Manager(rtsChan, useChan, rtrChan, nWriteEnds, mQueue, mQMax) = 
 -- rtsChan used to read node index from an associated WriteBuffer

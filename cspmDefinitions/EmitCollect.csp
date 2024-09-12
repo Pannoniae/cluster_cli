@@ -66,7 +66,7 @@ baseQueue = <1..collectNodes>
 mQueue = baseQueue
 -- 2 collectors per node
 --mQueue = baseQueue ^ baseQueue
-print mQueue
+--print mQueue
 
 -- ECsystem Definition
 ECsystem = (EmitCluster() 
@@ -80,9 +80,9 @@ ECsystem = (EmitCluster()
 -- Test System Definition
 TestSystem = finished ! true -> TestSystem
 
-assert ECsystem :[deadlock free [F]]
-assert ECsystem :[deadlock free [FD]]
+assert ECsystem :[deadlock free]
 assert ECsystem :[divergence free]
+assert ECsystem :[deterministic]  
 
 assert (ECsystem \ {|eTOwb, transferEC, cTOdc, 
                     rtsEmit, useEmit, rtrCollect, 
