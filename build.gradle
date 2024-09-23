@@ -17,7 +17,7 @@ version '1.0.9'
 //1.0.8 added a delay so that nodes wait until host has sufficient time to start.
 //1.0.9 added verbose to invoke to reduce amount of console output
 
-String propertyFileName = "C:/Github/gradle.properties"
+String propertyFileName = "gradle.properties"
 File propsFile = new File(propertyFileName)
 Properties props = new Properties()
 props.load(propsFile.newDataInputStream())
@@ -71,7 +71,7 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = "https://maven.pkg.github.com/JonKerridge/cluster_cli"
+            url = "https://maven.pkg.github.com/Pannoniae/cluster_cli"
             credentials {
                 username = props.getProperty("gpr.user")
                 password = props.getProperty("gpr.key")
